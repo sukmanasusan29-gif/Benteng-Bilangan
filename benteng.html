@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Benteng Bilangan – Solo Math Adventure</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4a69bd">
+    <style>
+        :root {
+            --primary: #4a69bd;
+            --primary-dark: #1e3799;
+            --secondary: #e58e26;
+            --success: #6ab04c;
+            --danger: #eb4d4b;
+            --bg-gradient: linear-gradient(135deg, #4834d4, #686de0);
+            --text-dark: #2f3640;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        .game-wrapper {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            max-height: 850px;
+            background: #f5f6fa;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        @media(min-width: 500px) {
+            .game-wrapper {
+                border-radius: 24px;
+                height: 90vh;
+            }
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f5f6fa;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* LOBBY */
+        #lobby-screen {
+            background: linear-gradient(135deg, #0984e3, #74b9ff);
+            color: white;
+            text-align: center;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .avatar-container {
+            width: 90px;
+            height: 90px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 12px auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-size: 45px;
+            animation: floatAvatar 3s ease-in-out infinite;
+        }
+
+        @keyframes floatAvatar {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .title-container h1 {
+            font-size: 24px;
+            margin-bottom: 4px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .title-container p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+        }
+
+        .menu-btn {
+            width: 85%;
+            max-width: 280px;
+            padding: 13px;
+            margin: 7px 0;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-play { background: #00b894; color: white; }
+        .btn-play:hover { background: #00cec9; }
+
+        .btn-menu { background: #ffeaa7; color: #2d3436; }
+        .btn-menu:hover { background: #fdcb6e; }
+
+        .btn-install { background: #e17055; color: white; display: none; }
+
+        .credit-box {
+            margin-top: 15px;
+            font-size: 11px;
+            opacity: 0.85;
+            line-height: 1.4;
+            background: rgba(0,0,0,0.15);
+            padding: 8px 15px;
+            border-radius: 10px;
+            width: 85%;
+            max-width: 280px;
+        }
+
+        /* HEADER TOP */
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .back-btn {
+            background: #dfe6e9;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .status-badge {
+            background: #ffeaa7;
+            color: #d35400;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 13px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* MAP PETUALANGAN */
+        .map-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding-bottom: 20px;
+        }
+
+        .map-node {
+            background: white;
+            padding: 14px;
+            border-radius: 14px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-left: 6px solid var(--primary);
+            transition: transform 0.2s;
+        }
+
+        .map-node.locked {
+            opacity: 0.6;
+            filter: grayscale(0.7);
+            border-left-color: #b2bec3;
+        }
+
+        .map-node.completed {
+            border-left-color: var(--success);
+        }
+
+        .map-node-info h3 {
+            font-size: 15px;
+            color: var(--text-dark);
+            margin-bottom: 2px;
+        }
+
+        .map-node-info p {
+            font-size: 11px;
+            color: #636e72;
+        }
+
+        .map-node-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .map-node.locked .map-node-btn {
+            background: #b2bec3;
+            cursor: not-allowed;
+        }
+
+        .map-node.completed .map-node-btn {
+            background: var(--success);
+        }
+
+        /* ARENA PERMAINAN */
+        .arena-header {
+            background: white;
+            padding: 12px 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 12px;
+        }
+
+        .arena-info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background: #dfe6e9;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: var(--success);
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+
+        .mission-visual-box {
+            background: linear-gradient(135deg, #2d3436, #636e72);
+            padding: 14px;
+            border-radius: 14px;
+            color: white;
+            text-align: center;
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visual-title {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #ffeaa7;
+        }
+
+        .visual-graphic {
+            font-size: 28px;
+            letter-spacing: 4px;
+            margin: 4px 0;
+        }
+
+        .math-beam {
+            position: absolute;
+            font-size: 20px;
+            animation: shootBeam 0.5s ease-out forwards;
+            display: none;
+        }
+
+        @keyframes shootBeam {
+            0% { left: 20%; opacity: 0; transform: scale(0.5); }
+            50% { opacity: 1; transform: scale(1.2); color: #ffeaa7; text-shadow: 0 0 8px #ff7675; }
+            100% { left: 80%; opacity: 0; transform: scale(1); }
+        }
+
+        /* KARTU SOAL & INTERAKSI */
+        .question-card {
+            background: white;
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            text-align: center;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .question-instruction {
+            font-size: 12px;
+            color: #b2bec3;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .question-display {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--primary-dark);
+            margin: 10px 0 15px 0;
+            letter-spacing: 1px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .option-btn {
+            background: #f1f2f6;
+            border: 2px solid #dcdde1;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--text-dark);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .option-btn:hover {
+            background: #dfe6e9;
+            border-color: var(--primary);
+        }
+
+        .option-btn.correct {
+            background: var(--success) !important;
+            color: white !important;
+            border-color: #27ae60 !important;
+        }
+
+        .option-btn.wrong {
+            background: var(--danger) !important;
+            color: white !important;
+            border-color: #c0392b !important;
+        }
+
+        /* INPUT KOTAK UNTUK MISI KHUSUS */
+        .input-answer-box {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 15px;
+        }
+
+        .answer-input-field {
+            padding: 10px;
+            font-size: 20px;
+            width: 120px;
+            border: 2px solid #dcdde1;
+            border-radius: 10px;
+            text-align: center;
+            outline: none;
+            font-weight: bold;
+        }
+
+        .submit-ans-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .feedback-box {
+            font-size: 14px;
+            font-weight: bold;
+            min-height: 22px;
+            margin-top: 5px;
+        }
+
+        /* VICTORY / KEMENANGAN MISI */
+        .result-container {
+            text-align: center;
+            padding: 25px 15px;
+            background: white;
+            border-radius: 18px;
+            margin: auto;
+            width: 100%;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        .stars-display {
+            font-size: 32px;
+            margin: 12px 0;
+        }
+
+        .stats-box {
+            background: #f1f2f6;
+            padding: 12px;
+            border-radius: 10px;
+            margin: 12px 0;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .stats-box div {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        /* ACHIEVEMENT & GUIDE SCREEN */
+        .badge-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .badge-item {
+            background: white;
+            padding: 10px 14px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-left: 5px solid #bdc3c7;
+        }
+
+        .badge-item.unlocked {
+            border-left-color: var(--secondary);
+        }
+
+        .badge-icon {
+            font-size: 26px;
+        }
+
+        .badge-info h4 {
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        .badge-info p {
+            font-size: 11px;
+            color: #636e72;
+        }
+
+        .primary-action-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .reset-btn {
+            background: transparent;
+            color: var(--danger);
+            border: 1px dashed var(--danger);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            width: 100%;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-wrapper">
+
+        <!-- 1. LOBBY SCREEN -->
+        <div id="lobby-screen" class="screen active">
+            <div class="avatar-container">👦</div>
+            <div class="title-container">
+                <h1>🏰 Benteng Bilangan</h1>
+                <p>Solo Math Adventure</p>
+            </div>
+            
+            <button class="menu-btn btn-play" onclick="goToMap()">▶ MULAI PETUALANGAN</button>
+            <button class="menu-btn btn-menu" onclick="showScreen('achievement-screen')">🏆 PRESTASI SAYA</button>
+            <button class="menu-btn btn-menu" onclick="showScreen('guide-screen')">📖 CARA BERMAIN</button>
+            <button id="install-btn" class="menu-btn btn-install" onclick="installPWA()">📲 INSTAL DI HP</button>
+
+            <div class="credit-box">
+                Khusus Kelas 2 MIS Annajiyah<br>
+                Pembuat games: Susan Sukmana
+            </div>
+        </div>
+
+        <!-- 2. PETA PETUALANGAN -->
+        <div id="map-screen" class="screen">
+            <div class="header-top">
+                <button class="back-btn" onclick="showScreen('lobby-screen')">🏠 Menu</button>
+                <div class="status-badge" id="key-status">🔑 Kunci: 0 / 4</div>
+            </div>
+
+            <h2 style="font-size: 18px; margin-bottom: 10px; text-align: center;">Peta Petualangan</h2>
+
+            <div class="map-container">
+                <!-- Misi 1 -->
+                <div class="map-node" id="node-1">
+                    <div class="map-node-info">
+                        <h3>🏰 Misi 1: Gerbang Ratusan</h3>
+                        <p>Tanpa Meminjam • 10 Soal</p>
+                    </div>
+                    <button class="map-node-btn" id="btn-node-1" onclick="startMission(1)">Mulai</button>
+                </div>
+
+                <!-- Misi 2 -->
+                <div class="map-node locked" id="node-2">
+                    <div class="map-node-info">
+                        <h3>🌉 Misi 2: Jembatan Angka</h3>
+                        <p>Mencari Angka Hilang • 10 Soal</p>
+                    </div>
+                    <button class="map-node-btn" id="btn-node-2" onclick="startMission(2)">🔒 Terkunci</button>
+                </div>
+
+                <!-- Misi 3 -->
+                <div class="map-node locked" id="node-3">
+                    <div class="map-node-info">
+                        <h3>🌲 Misi 3: Lembah Tantangan</h3>
+                        <p>Pengurangan Meminjam • 10 Soal</p>
+                    </div>
+                    <button class="map-node-btn" id="btn-node-3" onclick="startMission(3)">🔒 Terkunci</button>
+                </div>
+
+                <!-- Misi 4 -->
+                <div class="map-node locked" id="node-4">
+                    <div class="map-node-info">
+                        <h3>👑 Misi 4: Benteng Raja Angka</h3>
+                        <p>Ujian Akhir Master • 10 Soal</p>
+                    </div>
+                    <button class="map-node-btn" id="btn-node-4" onclick="startMission(4)">🔒 Terkunci</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. ARENA PERMAINAN -->
+        <div id="arena-screen" class="screen">
+            <div class="arena-header">
+                <div class="arena-info-row">
+                    <span id="arena-title">Misi 1 – Gerbang Ratusan</span>
+                    <span id="progress-indicator">Soal 1 / 10</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="mission-visual-box" id="visual-box">
+                <div class="visual-title" id="visual-title-text">🏰 Buka Gerbang Benteng</div>
+                <div class="visual-graphic" id="visual-graphic-text">🚪🔒</div>
+                <div class="math-beam" id="math-beam">✨⚡</div>
+            </div>
+
+            <div class="question-card">
+                <div>
+                    <div class="question-instruction" id="q-instruction">Pilih Jawaban yang Benar</div>
+                    <div class="question-display" id="question-display">587 − 234 = ?</div>
+                </div>
+                
+                <!-- Format Pilihan Ganda -->
+                <div class="options-grid" id="options-grid">
+                    <button class="option-btn" onclick="checkOptionAnswer(0)">A. 343</button>
+                    <button class="option-btn" onclick="checkOptionAnswer(1)">B. 353</button>
+                    <button class="option-btn" onclick="checkOptionAnswer(2)">C. 363</button>
+                    <button class="option-btn" onclick="checkOptionAnswer(3)">D. 373</button>
+                </div>
+
+                <!-- Format Input Isian (Dipakai di Misi tertentu) -->
+                <div class="input-answer-box" id="input-answer-box" style="display: none;">
+                    <input type="number" id="user-input-val" class="answer-input-field" placeholder="Angka">
+                    <button class="submit-ans-btn" onclick="checkInputAnswer()">Kirim</button>
+                </div>
+
+                <div class="feedback-box" id="feedback-msg"></div>
+            </div>
+        </div>
+
+        <!-- 4. LAYAR KEMENANGAN / SELESAI MISI -->
+        <div id="victory-screen" class="screen" style="justify-content: center; align-items: center;">
+            <div class="result-container">
+                <h2 id="victory-title">🎉 MISI SELESAI!</h2>
+                <p style="font-size: 13px; color: #636e72; margin-top: 4px;" id="victory-desc">Alhamdulillah! Kamu berhasil melewati misi ini.</p>
+                
+                <div class="stars-display" id="result-stars">⭐⭐⭐</div>
+
+                <div class="stats-box">
+                    <div><span>Jawaban Benar:</span> <strong id="res-correct" style="color:var(--success)">10</strong></div>
+                    <div><span>Jawaban Salah:</span> <strong id="res-wrong" style="color:var(--danger)">0</strong></div>
+                    <div><span>Kunci Diperoleh:</span> <strong id="res-key" style="color:var(--secondary)">🔑 +1</strong></div>
+                </div>
+
+                <button class="primary-action-btn" onclick="returnToMapAfterMission()">🗺️ KEMBALI KE PETA</button>
+            </div>
+        </div>
+
+        <!-- 5. PRESTASI SAYA -->
+        <div id="achievement-screen" class="screen">
+            <div class="header-top">
+                <button class="back-btn" onclick="showScreen('lobby-screen')">🏠 Menu</button>
+                <h2>Prestasi Saya</h2>
+                <div style="width: 50px;"></div>
+            </div>
+
+            <div class="badge-list" id="badge-container">
+                <!-- Diisi JS -->
+            </div>
+
+            <button class="reset-btn" onclick="resetProgressData()">🔄 RESET PROGRES PERMAINAN</button>
+        </div>
+
+        <!-- 6. CARA BERMAIN -->
+        <div id="guide-screen" class="screen">
+            <div class="header-top">
+                <button class="back-btn" onclick="showScreen('lobby-screen')">🏠 Menu</button>
+                <h2>Cara Bermain</h2>
+                <div style="width: 50px;"></div>
+            </div>
+
+            <div style="background: white; padding: 18px; border-radius: 14px; font-size: 13px; line-height: 1.6; color: #4b6584;">
+                <ol style="padding-left: 18px; display: flex; flex-direction: column; gap: 8px;">
+                    <li><strong>Pilih Misi:</strong> Selesaikan 4 Misi secara berurutan di Peta Petualangan.</li>
+                    <li><strong>Variasi Tantangan:</strong> Ada misi buka gerbang, bangun jembatan, lembah tantangan, hingga benteng raja angka.</li>
+                    <li><strong>Kumpulkan Kunci:</strong> Setiap misi yang selesai memberikan 1 kunci (`🔑`).</li>
+                    <li><strong>Taklukkan Benteng:</strong> Kumpulkan 4 kunci untuk menaklukkan benteng sepenuhnya!</li>
+                </ol>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- GENERATOR & VALIDASI SOAL (4 MISI × 10 SOAL = 40 SOAL) ---
+        
+        // Misi 1: Gerbang Ratusan (Tanpa Meminjam)
+        const mission1Questions = [];
+        for (let i = 0; i < 10; i++) {
+            let aH = Math.floor(Math.random() * 7) + 3;
+            let aT = Math.floor(Math.random() * 5) + 4;
+            let aU = Math.floor(Math.random() * 5) + 4;
+            let numA = aH * 100 + aT * 10 + aU;
+
+            let bH = Math.floor(Math.random() * (aH - 1)) + 1;
+            let bT = Math.floor(Math.random() * 3) + 1;
+            let bU = Math.floor(Math.random() * 3) + 1;
+            let numB = bH * 100 + bT * 10 + bU;
+
+            let ans = numA - numB;
+            mission1Questions.push({ type: 'choice', q: `${numA} − ${numB} = ?`, ans: ans, hint: "Pilih jawaban yang benar!" });
+        }
+
+        // Misi 2: Jembatan Angka (Mencari Angka Hilang / Variasi Bentuk)
+        const mission2Questions = [];
+        for (let i = 0; i < 10; i++) {
+            let numB = Math.floor(Math.random() * 300) + 100;
+            let ans = Math.floor(Math.random() * 400) + 100;
+            let numA = numB + ans; // Pastikan hasil tidak negatif
+
+            let subType = i % 2;
+            if (subType === 0) {
+                // Bentuk: A - [?] = C -> [?] = A - C (mencari pengurang)
+                mission2Questions.push({ type: 'input', q: `${numA} − ___ = ${ans}`, ans: numB, hint: "Ketik angka pengurang yang tepat!" });
+            } else {
+                // Bentuk: [?] - B = C -> [?] = B + C (mencari bilangan awal)
+                mission2Questions.push({ type: 'input', q: `___ − ${numB} = ${ans}`, ans: numA, hint: "Ketik angka awal yang tepat!" });
+            }
+        }
+
+        // Misi 3: Lembah Tantangan (Pengurangan dengan Meminjam)
+        const mission3Questions = [];
+        for (let i = 0; i < 10; i++) {
+            let aH = Math.floor(Math.random() * 5) + 4;
+            let aT = Math.floor(Math.random() * 4) + 3;
+            let aU = Math.floor(Math.random() * 3) + 1; // Satuan kecil agar butuh pinjaman
+            let numA = aH * 100 + aT * 10 + aU;
+
+            let bH = Math.floor(Math.random() * 2) + 1;
+            let bT = Math.floor(Math.random() * 2) + 1;
+            let bU = Math.floor(Math.random() * 4) + (aU + 2); // Satuan pengurang lebih besar -> butuh pinjam
+            if (bU > 9) bU = 9;
+            let numB = bH * 100 + bT * 10 + bU;
+
+            let ans = numA - numB;
+            mission3Questions.push({ type: 'choice', q: `${numA} − ${numB} = ?`, ans: ans, hint: "Gunakan teknik meminjam dengan teliti!" });
+        }
+
+        // Misi 4: Benteng Raja Angka (Ujian Akhir Master - Campuran Pilihan & Isian)
+        const mission4Questions = [];
+        for (let i = 0; i < 10; i++) {
+            let aH = Math.floor(Math.random() * 6) + 3;
+            let aT = Math.floor(Math.random() * 5) + 3;
+            let aU = Math.floor(Math.random() * 4) + 2;
+            let numA = aH * 100 + aT * 10 + aU;
+            let numB = Math.floor(Math.random() * 300) + 100;
+            if (numB >= numA) numB = numA - 50;
+            let ans = numA - numB;
+
+            if (i < 5) {
+                mission4Questions.push({ type: 'choice', q: `${numA} − ${numB} = ?`, ans: ans, hint: "Ujian Akhir: Pilih jawaban benar!" });
+            } else {
+                mission4Questions.push({ type: 'input', q: `${numA} − ${numB} = ?`, ans: ans, hint: "Ujian Akhir: Ketik hasil pengurangan!" });
+            }
+        }
+
+        // --- STATE GAME ---
+        let gameState = {
+            unlockedMission: 1, // 1 sampai 4
+            keysCollected: 0,
+            currentMission: 1,
+            currentIndex: 0,
+            correctCount: 0,
+            wrongCount: 0,
+            missionsCompleted: [false, false, false, false]
+        };
+
+        // Load & Save localStorage
+        function loadProgress() {
+            const saved = localStorage.getItem('benteng_bilangan_save_susansukmana_v2');
+            if (saved) {
+                try { gameState = JSON.parse(saved); } catch(e) {}
+            }
+            updateMapUI();
+        }
+
+        function saveProgress() {
+            localStorage.setItem('benteng_bilangan_save_susansukmana_v2', JSON.stringify(gameState));
+            updateMapUI();
+        }
+
+        function updateMapUI() {
+            document.getElementById('key-status').innerText = `🔑 Kunci: ${gameState.keysCollected} / 4`;
+
+            for (let i = 1; i <= 4; i++) {
+                const node = document.getElementById(`node-${i}`);
+                const btn = document.getElementById(`btn-node-${i}`);
+
+                if (i < gameState.unlockedMission || gameState.missionsCompleted[i-1]) {
+                    node.classList.remove('locked');
+                    node.classList.add('completed');
+                    btn.innerText = "⭐ Selesai";
+                } else if (i === gameState.unlockedMission) {
+                    node.classList.remove('locked', 'completed');
+                    btn.innerText = "Mulai";
+                } else {
+                    node.classList.add('locked');
+                    node.classList.remove('completed');
+                    btn.innerText = "🔒 Terkunci";
+                }
+            }
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if(screenId === 'achievement-screen') renderBadges();
+        }
+
+        function goToMap() {
+            loadProgress();
+            showScreen('map-screen');
+        }
+
+        let activeMissionQuestions = [];
+
+        function startMission(missionNum) {
+            if (missionNum > gameState.unlockedMission && !gameState.missionsCompleted[missionNum-1]) {
+                alert("Selesaikan misi sebelumnya terlebih dahulu!");
+                return;
+            }
+
+            gameState.currentMission = missionNum;
+            gameState.currentIndex = 0;
+            gameState.correctCount = 0;
+            gameState.wrongCount = 0;
+
+            if (missionNum === 1) activeMissionQuestions = mission1Questions;
+            else if (missionNum === 2) activeMissionQuestions = mission2Questions;
+            else if (missionNum === 3) activeMissionQuestions = mission3Questions;
+            else if (missionNum === 4) activeMissionQuestions = mission4Questions;
+
+            // Set Visual Tema Berdasarkan Misi
+            const titles = [
+                "🏰 Misi 1: Gerbang Ratusan",
+                "🌉 Misi 2: Jembatan Angka",
+                "🌲 Misi 3: Lembah Tantangan",
+                "👑 Misi 4: Benteng Raja Angka"
+            ];
+            const graphics = ["🚪🔒", "🌉🧱", "🌲✨", "👑💎"];
+            const visTitle = ["Buka Gerbang Benteng", "Bangun Jembatan Angka", "Taklukkan Lembah Tantangan", "Hadapi Raja Angka"];
+
+            document.getElementById('arena-title').innerText = titles[missionNum - 1];
+            document.getElementById('visual-title-text').innerText = visTitle[missionNum - 1];
+            document.getElementById('visual-graphic-text').innerText = graphics[missionNum - 1];
+
+            showScreen('arena-screen');
+            loadQuestion();
+        }
+
+        let currentCorrectAnswer = 0;
+
+        function loadQuestion() {
+            if (gameState.currentIndex >= activeMissionQuestions.length) {
+                finishMission();
+                return;
+            }
+
+            const qData = activeMissionQuestions[gameState.currentIndex];
+            document.getElementById('question-display').innerText = qData.q;
+            document.getElementById('q-instruction').innerText = qData.hint;
+            document.getElementById('progress-indicator').innerText = `Soal ${gameState.currentIndex + 1} / 10`;
+            
+            let pct = (gameState.currentIndex / 10) * 100;
+            document.getElementById('progress-fill').style.width = pct + '%';
+            document.getElementById('feedback-msg').innerText = '';
+
+            currentCorrectAnswer = qData.ans;
+
+            const grid = document.getElementById('options-grid');
+            const inputBox = document.getElementById('input-answer-box');
+
+            if (qData.type === 'choice') {
+                grid.style.display = 'grid';
+                inputBox.style.display = 'none';
+
+                let options = [currentCorrectAnswer];
+                while (options.length < 4) {
+                    let offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                    let fakeAns = currentCorrectAnswer + offset;
+                    if (fakeAns >= 0 && fakeAns <= 1000 && !options.includes(fakeAns)) {
+                        options.push(fakeAns);
+                    }
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                const optButtons = document.querySelectorAll('.option-btn');
+                optButtons.forEach((btn, idx) => {
+                    btn.innerText = ['A', 'B', 'C', 'D'][idx] + '. ' + options[idx];
+                    btn.disabled = false;
+                    btn.classList.remove('correct', 'wrong');
+                });
+            } else {
+                grid.style.display = 'none';
+                inputBox.style.display = 'flex';
+                document.getElementById('user-input-val').value = '';
+                document.getElementById('user-input-val').focus();
+            }
+        }
+
+        function checkOptionAnswer(selectedIndex) {
+            const optButtons = document.querySelectorAll('.option-btn');
+            const selectedBtn = optButtons[selectedIndex];
+            const selectedVal = parseInt(selectedBtn.innerText.split('. ')[1]);
+            
+            optButtons.forEach(b => b.disabled = true);
+
+            if (selectedVal === currentCorrectAnswer) {
+                selectedBtn.classList.add('correct');
+                handleCorrectAnswer();
+            } else {
+                selectedBtn.classList.add('wrong');
+                handleWrongAnswer(() => {
+                    optButtons.forEach(b => b.disabled = false);
+                    selectedBtn.classList.remove('wrong');
+                });
+            }
+        }
+
+        function checkInputAnswer() {
+            const valInput = document.getElementById('user-input-val');
+            const userVal = parseInt(valInput.value);
+
+            if (isNaN(userVal)) {
+                document.getElementById('feedback-msg').style.color = '#e17055';
+                document.getElementById('feedback-msg').innerText = 'Masukkan angka terlebih dahulu!';
+                return;
+            }
+
+            if (userVal === currentCorrectAnswer) {
+                handleCorrectAnswer();
+            } else {
+                handleWrongAnswer(() => {
+                    valInput.value = '';
+                    valInput.focus();
+                });
+            }
+        }
+
+        function handleCorrectAnswer() {
+            gameState.correctCount++;
+            triggerBeamEffect();
+
+            const msg = "Alhamdulillah, aku berhasil!";
+            document.getElementById('feedback-msg').style.color = 'var(--success)';
+            document.getElementById('feedback-msg').innerText = msg;
+            speakTTS(msg);
+
+            setTimeout(() => {
+                gameState.currentIndex++;
+                loadQuestion();
+            }, 1300);
+        }
+
+        function handleWrongAnswer(retryCallback) {
+            gameState.wrongCount++;
+            const msg = "Belum tepat. Yuk, hitung lagi!";
+            document.getElementById('feedback-msg').style.color = 'var(--danger)';
+            document.getElementById('feedback-msg').innerText = msg;
+
+            setTimeout(() => {
+                document.getElementById('feedback-msg').innerText = '';
+                retryCallback();
+            }, 1200);
+        }
+
+        function triggerBeamEffect() {
+            const beam = document.getElementById('math-beam');
+            beam.style.display = 'block';
+            setTimeout(() => { beam.style.display = 'none'; }, 500);
+        }
+
+        function speakTTS(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function finishMission() {
+            let mIdx = gameState.currentMission - 1;
+            if (!gameState.missionsCompleted[mIdx]) {
+                gameState.missionsCompleted[mIdx] = true;
+                gameState.keysCollected = Math.min(4, gameState.keysCollected + 1);
+                if (gameState.unlockedMission < 4) {
+                    gameState.unlockedMission++;
+                }
+            }
+
+            saveProgress();
+
+            document.getElementById('res-correct').innerText = gameState.correctCount;
+            document.getElementById('res-wrong').innerText = gameState.wrongCount;
+            document.getElementById('res-key').innerText = `🔑 +1 (Total: ${gameState.keysCollected}/4)`;
+            
+            let isAllConquer = gameState.keysCollected === 4;
+            document.getElementById('victory-title').innerText = isAllConquer ? "👑 BENTENG DITAKLUKKAN!" : "🎉 MISI SELESAI!";
+            document.getElementById('victory-desc').innerText = isAllConquer ? "Alhamdulillah! Kamu mengumpulkan 4 kunci dan menaklukkan benteng utama!" : "Alhamdulillah! Kamu berhasil melewati misi ini dan mendapat kunci!";
+
+            showScreen('victory-screen');
+        }
+
+        function returnToMapAfterMission() {
+            goToMap();
+        }
+
+        function renderBadges() {
+            const container = document.getElementById('badge-container');
+            const badges = [
+                { id: 1, icon: '🚪', title: 'Pembuka Gerbang', desc: 'Menyelesaikan Misi 1', unlocked: gameState.missionsCompleted[0] },
+                { id: 2, icon: '🌉', title: 'Pembangun Jembatan', desc: 'Menyelesaikan Misi 2', unlocked: gameState.missionsCompleted[1] },
+                { id: 3, icon: '🌲', title: 'Penjelajah Lembah', desc: 'Menyelesaikan Misi 3', unlocked: gameState.missionsCompleted[2] },
+                { id: 4, icon: '👑', title: 'Penakluk Raja Angka', desc: 'Menyelesaikan Misi 4 & Kumpul 4 Kunci', unlocked: gameState.keysCollected === 4 }
+            ];
+
+            container.innerHTML = badges.map(b => `
+                <div class="badge-item ${b.unlocked ? 'unlocked' : ''}">
+                    <div class="badge-icon">${b.icon}</div>
+                    <div class="badge-info">
+                        <h4>${b.title} ${b.unlocked ? '✅' : '🔒'}</h4>
+                        <p>${b.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function resetProgressData() {
+            if (confirm("Yakin ingin mereset seluruh progres permainan?")) {
+                localStorage.removeItem('benteng_bilangan_save_susansukmana_v2');
+                location.reload();
+            }
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('install-btn').style.display = 'flex';
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        document.getElementById('install-btn').style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
+            }
+        }
+
+        window.onload = () => { loadProgress(); };
+    </script>
+</body>
+</html>
